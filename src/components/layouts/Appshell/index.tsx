@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import Navbar from "../navbar";
 import Footer from "../footer";
 
-const disableNavbar = ['/auth/login', '/auth/register']; // Daftar path yang ingin disembunyikan Navbar
+const disableNavbar = ['/auth/login', '/auth/register', '/404']; // Daftar path yang ingin disembunyikan Navbar
 type AppShellProps = {
     children: React.ReactNode;
 }
