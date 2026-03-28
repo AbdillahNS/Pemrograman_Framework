@@ -1,22 +1,46 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import TampilanProduk from "../views/produk";
+import { use, useEffect, useState } from "react";
 
-const HalamanProduk = () => {
-    const [isLogin] = useState(false);
-    const { push } = useRouter();
+type ProductType = {
+    id: string;
+    name: string;
+    price: number;
+    size: string;
+    category: string;
+}
+
+const kategori = () => {
+    const [products, setProducts] = useState([]);
+
+    const fetchProducts = () => {
+        fetch('/api/produk')
+            .then((response) => response.json())
+            .then((responsedata) => {
+                setProducts(responsedata.data);
+            })
+            .catch((error) => {
+                console.error('Error fetching products:', error);
+            });
+    };
 
     useEffect(() => {
-        if (isLogin) {
-            push("/auth/login");
-        }
-    }, [isLogin, push]);
+        fetchProducts();
+    }, []);
 
     return (
-        <>
-            <TampilanProduk />
-        </>
+        <div>
+            <h1>Daftar Produk</h1>
+            <button onClick={fetchProducts}>Refresh Produk</button>
+            {products.map((products: ProductType) => (
+                <div key={products.id}>
+                    <h2>{products.name}</h2>
+                    <p>Harga: {products.price}</p>
+                    <p>Ukuran: {products.size}</p>
+                    <p>Kategori: {products.category}</p>
+                </div>
+            ))}
+        </div>
     );
 };
 
-export default HalamanProduk;
+export default kategori;
