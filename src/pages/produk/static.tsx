@@ -19,6 +19,7 @@ export async function getStaticProps() {
     return {
         props: {
             products: response.data,
-        }
+        },
+        revalidate: 10, // revalidate data setiap 10 detik
     }
 }
