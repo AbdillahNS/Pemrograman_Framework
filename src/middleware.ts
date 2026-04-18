@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-    const isLogin = false; // jika false kehalaman login, jika true maka bisa akses halaman produk
-    if (isLogin) {
-        return NextResponse.next();
-    } else {
-        return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-    // return NextResponse.redirect(new URL('/', request.url)); 
-    // //return NextResponse.next();
-}
+import withAuth from "./Middleware/withAuth";
+
+const baseMiddleware = async () => {
+    return NextResponse.next();
+};
+
+const requireAuthPaths: string[] = ["/admin", "/editor"];
+
+export default withAuth(baseMiddleware, requireAuthPaths);
 
 export const config = {
-    matcher: ["/produk", "/about"],
+    matcher: ["/admin", "/admin/:path*", "/editor", "/editor/:path*"],
 }

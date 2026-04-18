@@ -6,9 +6,10 @@ import { signIn } from "next-auth/react";
 
 const TampilanLogin = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const { push, query } = useRouter();
+    const { push, replace, query } = useRouter();
 
-    const callbackUrl: any = query.callbackUrl || "/";
+    const callbackUrl =
+        typeof query.callbackUrl === "string" ? query.callbackUrl : "/";
     const [error, setError] = useState("");
     const handleSubmit = async (event: any)=> {
         event.preventDefault();
@@ -57,9 +58,9 @@ const TampilanLogin = () => {
             });
 
             // console.log("signIn response:", res);
-            if (!res?.error) {
+            if (res?.ok) {
                 setIsLoading(false);
-                push(callbackUrl);
+                replace(res.url || callbackUrl);
             } else {
                 setIsLoading(false);
                 setError(res?.error || "Login failed");
@@ -116,6 +117,26 @@ const TampilanLogin = () => {
                         disabled={isLoading}
                     >
                         {isLoading ? "Loading..." : "login"}
+                    </button>{" "}
+                    <br /> <br />
+                    <button
+                        type="button"
+                        onClick={() => signIn("google", { callbackUrl })}
+                        className={style.login__form__item__button}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Loading..." : "Sign in with Google"}    
+
+                    </button>
+                    <br /> <br />
+                    <button
+                        type="button"
+                        onClick={() => signIn("github", { callbackUrl })}
+                        className={style.login__form__item__button}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Loading..." : "Sign in with GitHub"}
+
                     </button>
                 </form>
                 <br />

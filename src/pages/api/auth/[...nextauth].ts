@@ -1,7 +1,9 @@
-import { signIn } from "@/utils/db/servicefirebase";
+import { signIn, syncOAuthUser } from "@/utils/db/servicefirebase";
 import NextAuth, { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt";
+import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -38,7 +40,28 @@ export const authOptions: NextAuthOptions = {
         } 
         return null
       }
-    })
+    }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          }),
+        ]
+      : []),
+    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+      ? [
+          GitHubProvider({
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+            authorization: {
+              params: {
+                scope: "read:user user:email",
+              },
+            },
+          }),
+        ]
+      : []),
   ],
 
   callbacks: {
@@ -47,6 +70,23 @@ export const authOptions: NextAuthOptions = {
       token.email = user.email;
       token.fullname = user.fullname;
       token.role = user.role;
+    }
+
+    if (account?.provider === "google" || account?.provider === "github") {
+      const result = await syncOAuthUser({
+        fullname: user?.name || "",
+        email: user?.email || "",
+        image: user?.image || "",
+        provider: account.provider,
+      });
+
+      if (result.status && result.data) {
+        token.fullname = result.data.fullname;
+        token.email = result.data.email;
+        token.image = result.data.image;
+        token.role = result.data.role;
+        token.type = result.data.provider;
+      }
     }
     // console.log("jwt callback", { token, account, profile, user });
     return token;
@@ -59,8 +99,14 @@ export const authOptions: NextAuthOptions = {
     if (token.fullname) {
       session.user.fullname = token.fullname;
     }
+    if (token.image) {
+      session.user.image = token.image;
+    }
     if (token.role) {
       session.user.role = token.role;
+    }
+    if (token.type) {
+      session.user.type = token.type;
     }
     // console.log("session callback", { session, token });
     return session;

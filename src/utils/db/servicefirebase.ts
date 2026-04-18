@@ -3,14 +3,15 @@ import {
   collection,
   getDocs,
   getDoc,
-  Firestore,
   doc,
-  query,
-  where,
-  addDoc,
 } from "firebase/firestore";
 import app from "./firebase";
-import bcrypt from "bcrypt";
+import type { LocalUserInput } from "@/types/User.type";
+import {
+  findUserByEmail,
+  registerUser,
+  syncOAuthUser,
+} from "./user.service";
 
 const db = getFirestore(app);
 
@@ -30,62 +31,41 @@ export async function retrieveDataByID(collectionName: string, id: string) {
 }
 
 export async function signIn (
-    email: string,) {
-    const q = query(collection(db, "users"), where("email", "==", email));
-    const querySnapshot = await getDocs(q);
-    const data = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    if (data) {
-        return data[0];
-    } else {
-        return null;
-    }
+  email: string,
+) {
+  return findUserByEmail(email);
 }
 
 export async function signUp(
-  userData: {
-    email: string;
-    fullname: string;
-    password: string;
-    role?: string;
-  },
+  userData: LocalUserInput,
   callback: Function,
 ) {
-  const q = query(
-    collection(db, "users"),
-    where("email", "==", userData.email),
-  );
-
-  const querySnapshot = await getDocs(q);
-  const data = querySnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
-
-  if (data.length > 0) {
-    // user sudah ada -> tidak boleh daftar lagi
-    callback({
-      status: "error",
-      message: "User already exists",
-    });
-  } else {
-    // user belum ada -> boleh daftar
-    userData.password = await bcrypt.hash(userData.password, 10);
-    userData.role = "user";
-    await addDoc(collection(db, "users"), userData)
-      .then(() => {
-        callback({
-          status: "success",
-          message: "User registered successfully",
-        });
-      })
-      .catch((error) => {
-        callback({
-          status: "error",
-          message: error.message,
-        });
-      });
-  }
+  const result = await registerUser(userData);
+  callback(result);
 }
+
+export async function signInWithGoogle(userData: any, callback: any) {
+  const result = await syncOAuthUser({
+    fullname: userData.fullname,
+    email: userData.email,
+    image: userData.image,
+    provider: "google",
+  });
+
+  callback(result);
+  return result;
+}
+
+export async function signInWithGitHub(userData: any, callback: any) {
+  const result = await syncOAuthUser({
+    fullname: userData.fullname,
+    email: userData.email,
+    image: userData.image,
+    provider: "github",
+  });
+
+  callback(result);
+  return result;
+}
+
+export { syncOAuthUser };
