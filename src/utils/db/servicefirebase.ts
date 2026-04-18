@@ -29,6 +29,21 @@ export async function retrieveDataByID(collectionName: string, id: string) {
   return data;
 }
 
+export async function signIn (
+    email: string,) {
+    const q = query(collection(db, "users"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    const data = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    if (data) {
+        return data[0];
+    } else {
+        return null;
+    }
+}
+
 export async function signUp(
   userData: {
     email: string;
@@ -58,7 +73,7 @@ export async function signUp(
   } else {
     // user belum ada -> boleh daftar
     userData.password = await bcrypt.hash(userData.password, 10);
-    userData.role = "member";
+    userData.role = "user";
     await addDoc(collection(db, "users"), userData)
       .then(() => {
         callback({
