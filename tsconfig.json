@@ -16,6 +16,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "types": [
+      "jest",
+      "node"
+    ],
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
